@@ -359,7 +359,11 @@ $('fotosFile').onchange=async e=>{
   for(const item of list){
    if(!item||!item.codigo||!item.foto)continue;
    const code=String(item.codigo).trim().toUpperCase();
-   const big=await makeBoth(item.foto);
+   // Mantém a foto do JSON exatamente como veio (sem recomprimir), só gera a miniatura.
+   let src=item.foto;if(typeof src!='string')continue;
+   if(!/^(data:|https?:)/.test(src))src='data:image/jpeg;base64,'+src;
+   const th=await compressDataUrl(src,300,0.82);
+   const big=th?{t:th,f:src}:null;
    const old=PH[code],oldLen=old?(old.f||old).length:0;
    if(big&&big.f.length>oldLen){await putPhoto(code,big);added++}
   }
