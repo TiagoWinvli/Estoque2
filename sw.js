@@ -9,7 +9,7 @@
 // que existe uma versão nova do Service Worker, instalar ela, jogar fora
 // o cache antigo e recarregar a página sozinho — sem precisar limpar
 // cache manualmente no celular.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `estoque-caixas-${CACHE_VERSION}`;
 
 // Arquivos essenciais pra o app abrir (o "esqueleto" do app).

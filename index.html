@@ -11,6 +11,12 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141513;--card:#1f211d;--tx:#eceae3;--mut:#9b978b;--ln:#33352e;--c1:#2dd4bf;--c1s:#1d3b37;--c2:#c8a8f7;--c2s:#34274a}}
 :root[data-theme="dark"]{--bg:#141513;--card:#1f211d;--tx:#eceae3;--mut:#9b978b;--ln:#33352e;--c1:#2dd4bf;--c1s:#1d3b37;--c2:#c8a8f7;--c2s:#34274a}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+/* Tira o brilho/borda azul que ficava depois de tocar em botões, caixas e fotos */
+*{-webkit-tap-highlight-color:transparent}
+button,.rw,.thumb,.lb,.sh{outline:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button:focus:not(:focus-visible),.rw:focus,.thumb:focus{outline:none}
+button:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+input:focus{outline:none;border-color:var(--c1)}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 .w{max-width:760px;margin:0 auto;padding:16px 14px 40px}
 h1{font-size:22px;margin:4px 0 14px}
