@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estoque de Caixas</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#1c1b18;--mut:#7a766b;--ln:#e5e0d4;--c1:#0f766e;--c1s:#dff1ee;--c2:#7c3fb5;--c2s:#ece2f8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141513;--card:#1f211d;--tx:#eceae3;--mut:#9b978b;--ln:#33352e;--c1:#2dd4bf;--c1s:#1d3b37;--c2:#c8a8f7;--c2s:#34274a}}
+:root[data-theme="dark"]{--bg:#141513;--card:#1f211d;--tx:#eceae3;--mut:#9b978b;--ln:#33352e;--c1:#2dd4bf;--c1s:#1d3b37;--c2:#c8a8f7;--c2s:#34274a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:22px;margin:4px 0 14px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sc2{border-radius:16px;padding:12px 14px;display:flex;flex-direction:column}
+.sc2 b{font-size:22px}.sc2 span{font-size:12px;opacity:.85}
+.bota{background:var(--c1s);color:var(--c1)}.plat{background:var(--c2s);color:var(--c2)}
+.sbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:6px 0 10px}
+input{width:100%;padding:13px 14px;border:1px solid var(--ln);border-radius:14px;background:var(--card);color:var(--tx);font:inherit}
+.gt{display:flex;align-items:baseline;gap:8px;margin:18px 0 10px;font-size:17px;font-weight:700}
+.gt small{font-weight:400;color:var(--mut);font-size:13px}
+.gd{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.tl{border:0;border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font:inherit}
+.tl .tn{font-size:28px;font-weight:800;line-height:1}.tl .tq{font-size:12px;opacity:.85}
+.tl.add{background:transparent;border:2px dashed var(--ln);color:var(--mut);font-size:26px;justify-content:center}
+.rc{color:var(--mut);font-size:13px;margin:4px 0 10px}
+.rw{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.rl,.il{flex:1;min-width:0}
+.cd{font-weight:700;font-family:ui-monospace,Menlo,monospace;font-size:14px;display:block;margin-bottom:5px}
+.ch{display:flex;gap:5px;flex-wrap:wrap}
+.chip{background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:2px 8px;font-size:13px}
+.chip i{color:var(--mut);font-style:normal}
+.bd{border-radius:10px;padding:5px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+mark{background:#fde047;color:#000;border-radius:3px}
+.emp{text-align:center;color:var(--mut);padding:36px 10px}
+.foot{margin-top:30px;display:flex;gap:16px;justify-content:center}
+.lk{background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
+.b{padding:9px 14px;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:10px;cursor:pointer;font:inherit}
+.b.p{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.b.s{padding:5px 10px;font-size:13px}
+.sh,.m{position:fixed;inset:0;background:#0007;display:none;z-index:15}
+.sh{align-items:flex-end;justify-content:center}.sh.on{display:flex}
+.sc{background:var(--bg);width:100%;max-width:600px;max-height:88%;overflow:auto;border-radius:22px 22px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px))}
+.sh1{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sh1 div{flex:1}.sh1 small{display:block;color:var(--mut)}
+.nb{font-size:26px;font-weight:800;border-radius:14px;padding:6px 14px}
+.it{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:11px 12px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.ib{display:flex;gap:5px}
+.sf{display:flex;gap:8px;margin-top:12px}.sf .b{flex:1}
+.m{z-index:20;align-items:center;justify-content:center;padding:14px}.m.on{display:flex}
+.md{background:var(--card);border-radius:16px;padding:16px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px}
+.md label{font-size:12px;color:var(--mut)}
+</style></head><body>
+<div class="w">
+<h1>📦 Estoque de Caixas</h1>
+<div class="sum" id="sum"></div>
+<div class="sbar"><input id="q" type="search" placeholder="🔍 Buscar código ou tamanho (Bota e Plataforma)"></div>
+<div id="ls"></div>
+<div class="foot"><button class="lk" id="csv">Exportar CSV</button><button class="lk" id="rst">Restaurar dados</button></div>
+</div>
+<div class="sh" id="sh"><div class="sc" id="scc"></div></div>
+<div class="m" id="m"><div class="md">
+<b id="mt"></b>
+<label>Nº da caixa</label><input id="f1" inputmode="numeric">
+<label>Código do modelo</label><input id="f2">
+<label>Tamanhos (ex: 40x2, 41, 42x4) — sem "x" = 1 par</label><input id="f3">
+<div style="display:flex;gap:6px;justify-content:flex-end"><button class="b" id="cn">Cancelar</button><button class="b p" id="ok">Salvar</button></div>
+</div></div>
+<script>
+// Formato: caixa|MODELO:tam x qtd,tam;MODELO:...   (sem "x" = 1 par)
+const SEED_BOTA=`1|CT00040001:40x2,41,42x4,44;CT00040004:40,41,42,43
+2|CT04470002:33,40;CT04470001:33,37;CT35900003:37,39;1S7196C:36,40.5;1S7197C:38,40
+3|CT00040001:41x2;CT00040006:35,38;CT00040002:35;CT00040004:38;CT35230003:33,43x2;CT04490002:33
+4|CT04470002:38;CT35150002:35;CKJ4440009:36;CT04190096:33;CT04190095:36;CKJ5630007:34;CT35150001:37;CT28330001:37
+5|CT35050002:39;CT04190088:38;CT34850003:36;CKJ5630004:37;CT00040002:42;CT34630002:35;CT04510003:40;CT35900002:33;CT35150001:42;CT04510001:34;CT04490002:40
+6|CKJ5630006:35,36x3;CT00040003:37;CT32770002:37,40;CT04190003:37;CT00040004:43;CT35050003:35;JS6999C:35;CKJ5630002:33
+7|CT04470002:43,44x4;CT32770002:35;CT34990003:34;CT34910002:35;CT32810001:39;CT00040003:36
+8|CT04490002:33x2,38,39;CT08250002:39;CT04510001:35;CT00040008:34;CT29630001:36;CT04190090:37,40
+9|CT29130002:35,36,37x2;CT28900001:34,40;CT28900002:38,40
+10|CT00040003:37,44x2;CT30130004:34,35;CT04490001:35,39,43;CT00040001:42;CT04190093:33;CT28900001:37
+11|CT00040004:44;CK13030001:33;CT32820001:40;CT28330001:38;CT31790001:35;CT31120001:34;CT31790002:36;CT30980001:34;CT31260001:37,38;CT00040007:44;CT00040008:44
+12|CT04490001:36,39,43;CT04510005:35;CT29130001:36;CT28880002:35;CT27620002:35;CT19430002:38
+13|CT28330001:34,35x2,37,39;CT08250002:39,44;CKJ4460002:33;CT17290001:40
+14|CT23690001:37,41;CT00060003:45;CT00040008:36;CT17290001:35;CT28900001:37;CT04490001:35;CT32820002:36;CT33610001:37
+15|CT04190086:33;CT04190090:36x2;CT30370003:33;CK13030001:37;CT04190081:36;CT19910004:38;CT00040003:44
+16|CT29720001:36x4;CT04190003:35x2;CT04190088:39;CT19910004:38;CT00040003:44;CK15630006:33x2;156999C:?
+17|CT26610002:33x3,34,36,38,39;CT28100002:38;CT19910009:36,37;CT31260001:36
+18|CT04190081:36;CT00040001:42;CT00040003:37;CT04510010:35;CT04510001:33;CT04510005:33,34;CT04510003:34x2
+19|CT04190080:34x4,35,39;CT31260001:34;CT04190081:33x2,36x2,37
+20|CT04190084:36;CT28330003:34,38x2;CT31250001:40;CT04190078:34;CT04190079:33;CT26610001:36;CT00040001:40;CT26490001:33;CKJ4170001:33;CT04190070:35
+21|CT28330001:39;CT00040003:38;CT32770002:38x2;CT32820001:35;CT00040001:37x2;157000C:33,33.5,35
+22|CT08250001:33,38,41,42,43,44;CT32930001:34;CT32650003:38`;
+const SEED_PLAT=`1|CT09830001:33,38;CT04950003:41x3;CT04950001:37;CT09630064:33;CT09820001:36;CT09820002:35;CT09830004:33
+2|CT04940003:37x5,40x3
+3|CT04950001:34,38;CT34900001:34;CT34900002:37;CT09830002:34,35,37,39;CT09830003:38;CT32790001:39
+4|CT04950002:35x4,38,42;CT04950001:39;CT09830001:39;CT09820002:41;J66696C:33x2
+5|166584C:33x8
+6|CT32790001:33,34x2,36;CT09820001:37x2;CT04940003:33,34
+7|CT04940001:33;CT12000055:37;CT04940003:34,38;166584C:34x3,37
+8|CT33490002:38;CT04950001:33x2,42;CKJ5660003:34,35;CT04940002:38x2;CT04940004:33;CT04940003:35
+9|CT26550001:36x2;CT30360001:33,36,37;CT29600002:34x5;CT32110002:34x2
+10|CT32110002:34x2;CT25630002:36,39;CT22880001:38;CT28420002:37;CT28280001:33;CT32190001:36;CT25940001:37x2;CT28280002:39;CT04940003:33
+11|CT04940003:35x3;CT09830002:35;CT09830003:35;CKJ5660003:34;CT09830001:33;166584C:37;166582C:39
+13|CT28010001:36;CT25630001:35x2,36x3,37x3,38x2,39
+14|CT09830001:36x2,38;CT28010002:36;CT31610001:37;CT25940001:36;CT04950001:36x4
+15|CT04950001:34;166584C:33x2;CT09820002:36;CT04940003:33x3,34,40
+16|CT33490002:38;CT09820002:37x2;CT09820001:37;166587C:41;166582C:33,34;CT04950001:36;CT04940003:41`;
+const parse=s=>s.trim().split('\n').filter(Boolean).map(l=>{const[n,r]=l.split('|');return{n:+n,items:r.split(';').map(p=>{const[c,z]=p.split(':');return{c,z:z.split(',').map(x=>{const[t,q]=x.split('x');return{t,q:+q||1}})}})}});
+const KEY='estoque-caixas-v1';
+let D,tab='bota',byModel=false,qry='',edit=null;
+const V=2,fresh=()=>({v:V,bota:parse(SEED_BOTA),plat:parse(SEED_PLAT)});
+try{D=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!D||!D.bota)D=fresh();
+if((D.v||1)<V){const f=fresh();['bota','plat'].forEach(k=>{D[k]=D[k]||[];f[k].forEach(b=>{if(!D[k].some(x=>x.n==b.n))D[k].push(b)})});D.v=V;try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const hl=s=>{s=esc(s);if(!qry)return s;const i=s.toLowerCase().indexOf(qry);return i<0?s:s.slice(0,i)+'<mark>'+s.slice(i,i+qry.length)+'</mark>'+s.slice(i+qry.length)};
+const pr=q=>q+(q>1?' pares':' par');
+const zs=z=>z.map(x=>x.t+(x.q>1?'x'+x.q:'')).join(', ');
+const pz=s=>s.split(/[,;]/).map(x=>x.trim()).filter(Boolean).map(x=>{const[t,q]=x.toLowerCase().split('x');return{t:t.trim(),q:+q||1}});
+const pairs=b=>b.items.reduce((a,i)=>a+i.z.reduce((s,x)=>s+x.q,0),0);
+const match=(i)=>!qry||i.c.toLowerCase().includes(qry)||i.z.some(x=>x.t.toLowerCase()===qry||x.t.toLowerCase().startsWith(qry)&&/^\d/.test(qry));
+
+const NM={bota:'Bota Adulta',plat:'Plataforma'};
+let cur=null;
+const mz=i=>!qry||i.c.toLowerCase().includes(qry)?i.z:i.z.filter(x=>x.t.toLowerCase().startsWith(qry));
+const chips=(z,h)=>z.map(x=>`<span class="chip">${h?hl(x.t):esc(x.t)} <i>· ${pr(x.q)}</i></span>`).join('');
+const box=(n,t)=>D[t].find(b=>b.n==n);
+function render(){
+ $('sum').innerHTML=['bota','plat'].map(t=>`<div class="sc2 ${t}"><b>${pr(D[t].reduce((a,b)=>a+pairs(b),0))}</b><span>${NM[t]} · ${D[t].length} ${D[t].length==1?'caixa':'caixas'}</span></div>`).join('');
+ let h='';
+ if(qry){
+  const R=[];['bota','plat'].forEach(t=>D[t].forEach(b=>b.items.forEach(i=>{const z=mz(i);if(z.length)R.push({t,n:b.n,c:i.c,z})})));
+  R.sort((a,b)=>a.c.localeCompare(b.c)||a.n-b.n);
+  const tot=R.reduce((a,r)=>a+r.z.reduce((s,x)=>s+x.q,0),0);
+  h=R.length?`<div class="rc">${R.length} ${R.length>1?'resultados':'resultado'} · ${pr(tot)} no total</div>`+R.map(r=>`<div class="rw" data-a="open" data-t="${r.t}" data-n="${r.n}"><div class="rl"><span class="cd">${hl(r.c)}</span><div class="ch">${chips(r.z,1)}</div></div><span class="bd ${r.t}">${r.t=='bota'?'Bota':'Plataforma'} · Caixa ${r.n}</span></div>`).join(''):'<div class="emp">Nada encontrado.</div>';
+ }else{
+  ['bota','plat'].forEach(t=>{
+   const L=D[t].slice().sort((a,b)=>a.n-b.n);
+   h+=`<div class="gt">${NM[t]} <small>${L.length} ${L.length==1?'caixa':'caixas'}</small></div><div class="gd">`+L.map(b=>`<button class="tl ${t}" data-a="open" data-t="${t}" data-n="${b.n}"><span class="tn">${b.n}</span><span class="tq">${pr(pairs(b))}</span></button>`).join('')+`<button class="tl add" data-a="nb" data-t="${t}">＋</button></div>`;
+  });
+ }
+ $('ls').innerHTML=h;
+}
+function sheet(){
+ const b=cur&&box(cur.n,cur.t);
+ if(!b){$('sh').classList.remove('on');cur=null;return}
+ const t=cur.t,n=cur.n,a=`data-t="${t}" data-n="${n}"`;
+ $('scc').innerHTML=`<div class="sh1"><span class="nb ${t}">${n}</span><div><b>${NM[t]}</b><small>${pr(pairs(b))} · ${b.items.length} ${b.items.length==1?'modelo':'modelos'}</small></div><button class="b s" data-a="cl">Fechar</button></div>`+
+ b.items.map((i,k)=>`<div class="it"><div class="il"><span class="cd">${esc(i.c)}</span><div class="ch">${chips(i.z)}</div></div><div class="ib"><button class="b s" data-a="ei" ${a} data-k="${k}">✎</button><button class="b s" data-a="di" ${a} data-k="${k}">✕</button></div></div>`).join('')+
+ `<div class="sf"><button class="b p" data-a="ai" ${a}>＋ Modelo</button><button class="b" data-a="db" ${a}>Excluir caixa</button></div>`;
+ $('sh').classList.add('on');
+}
+function openM(title,n,c,z,lockN,t){edit={t};$('mt').textContent=title+' ('+NM[t]+')';$('f1').value=n;$('f1').disabled=!!lockN;$('f2').value=c;$('f3').value=z;$('m').classList.add('on')}
+const closeM=()=>{$('m').classList.remove('on');edit=null};
+$('cn').onclick=closeM;
+$('ok').onclick=()=>{
+ const n=+$('f1').value,c=$('f2').value.trim().toUpperCase(),z=pz($('f3').value),t=edit.t;
+ if(!n||!c||!z.length){alert('Preencha caixa, código e tamanhos.');return}
+ let b=box(n,t);if(!b){b={n,items:[]};D[t].push(b)}
+ const it={c,z};
+ if(edit.k!=null)b.items[edit.k]=it;else b.items.push(it);
+ save();closeM();cur={t,n};render();sheet();
+};
+document.addEventListener('click',e=>{
+ if(e.target.id=='sh'){cur=null;sheet();return}
+ const x=e.target.closest('[data-a]');if(!x)return;
+ const a=x.dataset.a,n=x.dataset.n,k=x.dataset.k,t=x.dataset.t;
+ if(a=='open'){cur={t,n};sheet()}
+ if(a=='cl'){cur=null;sheet()}
+ if(a=='nb'){const mx=Math.max(0,...D[t].map(b=>b.n));openM('Nova caixa',mx+1,'','',false,t)}
+ if(a=='ai')openM('Adicionar modelo — caixa '+n,n,'','',true,t);
+ if(a=='ei'){const i=box(n,t).items[k];openM('Editar — caixa '+n,n,i.c,zs(i.z),true,t);edit.k=+k}
+ if(a=='di'&&confirm('Remover este modelo da caixa '+n+'?')){box(n,t).items.splice(k,1);save();render();sheet()}
+ if(a=='db'&&confirm('Excluir a caixa '+n+' inteira?')){D[t]=D[t].filter(b=>b.n!=n);save();cur=null;render();sheet()}
+});
+$('q').oninput=e=>{qry=e.target.value.trim().toLowerCase();render()};
+$('rst').onclick=()=>{if(confirm('Apagar alterações e voltar aos dados originais?')){D=fresh();save();cur=null;render();sheet()}};
+$('csv').onclick=()=>{
+ const rows=[['Tipo','Caixa','Modelo','Tamanho','Pares']];
+ ['bota','plat'].forEach(k=>D[k].forEach(b=>b.items.forEach(i=>i.z.forEach(x=>rows.push([NM[k],b.n,i.c,x.t,x.q])))));
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.join(';')).join('\n')],{type:'text/csv'}));a.download='estoque.csv';a.click();
+};
+render();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+}
+</script></body></html>
