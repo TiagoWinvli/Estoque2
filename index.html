@@ -155,13 +155,56 @@ let cur=null,pendingImg=null,removeImg=false;
 
 // Fotos ficam guardadas à parte, por código do modelo (compartilhadas entre
 // caixas/categorias que tiverem o mesmo código), não dentro de cada item.
-const PHOTOS_KEY='estoque-caixas-photos-v1';
+const PHOTOS_KEY='estoque-caixas-photos-v1'; // formato antigo (localStorage), só para migrar
+const pk=c=>String(c||'').trim().toUpperCase();
+// PH[codigo] = {t: miniatura, f: foto grande} (ou texto simples, no formato antigo)
 let PH={};
-try{PH=JSON.parse(localStorage.getItem(PHOTOS_KEY))||{}}catch(e){PH={}}
-const savePH=()=>{try{localStorage.setItem(PHOTOS_KEY,JSON.stringify(PH))}catch(e){setTimeout(()=>toast('Sem espaço para guardar todas as fotos.'),0)}};
-const photoFor=c=>PH[String(c||'').trim().toUpperCase()];
+const photoFor=c=>{const v=PH[pk(c)];return v&&(v.t||v)};
+const photoFull=c=>{const v=PH[pk(c)];return v&&(v.f||v)};
 
-function compressDataUrl(src,maxSize){
+let dbP;
+function idb(){
+ return dbP||(dbP=new Promise((res,rej)=>{
+  const r=indexedDB.open('estoque-caixas-fotos',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('fotos');
+  r.onsuccess=()=>res(r.result);
+  r.onerror=()=>rej(r.error);
+ }));
+}
+const idbDo=(mode,fn)=>idb().then(db=>new Promise((res,rej)=>{
+ const tx=db.transaction('fotos',mode),st=tx.objectStore('fotos');
+ const out=fn(st);
+ tx.oncomplete=()=>res(out&&out.result);
+ tx.onerror=()=>rej(tx.error);
+ tx.onabort=()=>rej(tx.error);
+}));
+async function putPhoto(c,v){
+ c=pk(c);PH[c]=v;
+ try{await idbDo('readwrite',st=>st.put(v,c))}catch(e){toast('Não consegui guardar a foto (sem espaço?).')}
+}
+async function delPhoto(c){
+ c=pk(c);delete PH[c];
+ try{await idbDo('readwrite',st=>st.delete(c))}catch(e){}
+}
+async function loadPhotos(){
+ try{
+  const db=await idb();
+  await new Promise((res,rej)=>{
+   const tx=db.transaction('fotos','readonly'),rq=tx.objectStore('fotos').openCursor();
+   rq.onsuccess=()=>{const cu=rq.result;if(cu){PH[cu.key]=cu.value;cu.continue()}};
+   tx.oncomplete=res;tx.onerror=()=>rej(tx.error);
+  });
+  // migra as fotos antigas que estavam no localStorage
+  const old=JSON.parse(localStorage.getItem(PHOTOS_KEY)||'null');
+  if(old&&typeof old=='object'){
+   for(const c of Object.keys(old)){if(!PH[c])await putPhoto(c,{t:old[c],f:old[c]})}
+   localStorage.removeItem(PHOTOS_KEY);
+  }
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+ }catch(e){}
+}
+
+function compressDataUrl(src,maxSize,q){
  return new Promise(resolve=>{
   if(!src){resolve(null);return}
   const img=new Image();
@@ -170,11 +213,17 @@ function compressDataUrl(src,maxSize){
    if(w>h&&w>maxSize){h=h*maxSize/w;w=maxSize}else if(h>maxSize){w=w*maxSize/h;h=maxSize}
    const c=document.createElement('canvas');c.width=w;c.height=h;
    c.getContext('2d').drawImage(img,0,0,w,h);
-   resolve(c.toDataURL('image/jpeg',0.72));
+   resolve(c.toDataURL('image/jpeg',q||0.88));
   };
   img.onerror=()=>resolve(null);
   img.src=src;
  });
+}
+async function makeBoth(src){
+ const f=await compressDataUrl(src,1400,0.9);
+ if(!f)return null;
+ const t=await compressDataUrl(f,300,0.82);
+ return {t:t||f,f};
 }
 function readFileAsDataURL(file){
  return new Promise((resolve,reject)=>{
@@ -210,12 +259,12 @@ function render(){
 }
 function sheet(){
  const b=cur&&box(cur.n,cur.t);
- if(!b){$('sh').classList.remove('on');cur=null;return}
+ if(!b){$('sh').classList.remove('on');cur=null;sync();return}
  const t=cur.t,n=cur.n,a=`data-t="${t}" data-n="${n}"`;
  $('scc').innerHTML=`<div class="sh1"><span class="nb ${t}">${n}</span><div><b>${NM[t]}</b><small>${pr(pairs(b))} · ${b.items.length} ${b.items.length==1?'modelo':'modelos'}</small></div><button class="b s" data-a="cl">Fechar</button></div>`+
  b.items.map((i,k)=>`<div class="it">${photoFor(i.c)?`<img class="thumb" data-a="zoom" data-c="${esc(i.c)}" src="${photoFor(i.c)}" alt="">`:''}<div class="il"><span class="cd">${esc(i.c)}</span><div class="ch">${chips(i.z)}</div></div><div class="ib"><button class="b s" data-a="ei" ${a} data-k="${k}">✎</button><button class="b s" data-a="di" ${a} data-k="${k}">✕</button></div></div>`).join('')+
  `<div class="sf"><button class="b p" data-a="ai" ${a}>＋ Modelo</button><button class="b" data-a="db" ${a}>Excluir caixa</button></div>`;
- $('sh').classList.add('on');
+ $('sh').classList.add('on');sync();
 }
 function openM(title,n,c,z,lockN,t){
  edit={t};pendingImg=null;removeImg=false;
@@ -223,16 +272,16 @@ function openM(title,n,c,z,lockN,t){
  $('f4').value='';
  const existing=photoFor(c);
  if(existing){$('f4prev').src=existing;$('f4wrap').style.display='flex'}else{$('f4wrap').style.display='none'}
- $('m').classList.add('on');
+ $('m').classList.add('on');sync();
 }
-const closeM=()=>{$('m').classList.remove('on');edit=null};
+const closeM=()=>{$('m').classList.remove('on');edit=null;sync()};
 $('cn').onclick=closeM;
 $('f4').onchange=async e=>{
  const file=e.target.files[0];if(!file)return;
  const raw=await readFileAsDataURL(file);
- pendingImg=await compressDataUrl(raw,480);
+ pendingImg=await makeBoth(raw);
  removeImg=false;
- $('f4prev').src=pendingImg;$('f4wrap').style.display='flex';
+ $('f4prev').src=pendingImg.t;$('f4wrap').style.display='flex';
 };
 $('f4rm').onclick=()=>{pendingImg=null;removeImg=true;$('f4').value='';$('f4wrap').style.display='none'};
 $('ok').onclick=()=>{
@@ -241,23 +290,42 @@ $('ok').onclick=()=>{
  let b=box(n,t);if(!b){b={n,items:[]};D[t].push(b)}
  const it={c,z};
  if(edit.k!=null)b.items[edit.k]=it;else b.items.push(it);
- if(removeImg){delete PH[c];savePH()}
- else if(pendingImg){PH[c]=pendingImg;savePH()}
+ if(removeImg)delPhoto(c);
+ else if(pendingImg)putPhoto(c,pendingImg);
  save();closeM();cur={t,n};render();sheet();
 };
 function zoom(src,code){
  if(!src)return;
- $('lbi').src=src;$('lbc').textContent=code||'';$('lb').classList.add('on');
+ $('lbi').src=src;$('lbc').textContent=code||'';$('lb').classList.add('on');sync();
 }
-const closeLb=()=>{$('lb').classList.remove('on');$('lbi').removeAttribute('src')};
+const closeLb=()=>{$('lb').classList.remove('on');$('lbi').removeAttribute('src');sync()};
+
+// Botão "voltar" do celular: cada camada aberta (foto, formulário, caixa) usa
+// uma entrada no histórico, então voltar fecha só a camada de cima em vez de
+// sair do app.
+let pushed=false,ignorePop=0,syncT;
+const anyOpen=()=>$('lb').classList.contains('on')||$('m').classList.contains('on')||$('sh').classList.contains('on');
+function sync(){clearTimeout(syncT);syncT=setTimeout(()=>{
+ const open=anyOpen();
+ if(open&&!pushed){history.pushState({camada:1},'');pushed=true}
+ else if(!open&&pushed){pushed=false;ignorePop++;history.back()}
+},0)}
+window.addEventListener('popstate',()=>{
+ if(ignorePop>0){ignorePop--;return}
+ pushed=false;
+ if($('lb').classList.contains('on'))closeLb();
+ else if($('m').classList.contains('on'))closeM();
+ else if($('sh').classList.contains('on')){cur=null;sheet()}
+ sync();
+});
 $('lb').onclick=closeLb;
 document.addEventListener('keydown',e=>{if(e.key=='Escape'&&$('lb').classList.contains('on'))closeLb()});
-$('f4prev').onclick=()=>zoom($('f4prev').src,$('f2').value.trim().toUpperCase());
+$('f4prev').onclick=()=>{const c=pk($('f2').value);zoom(pendingImg?pendingImg.f:photoFull(c),c)};
 document.addEventListener('click',e=>{
  if(e.target.id=='sh'){cur=null;sheet();return}
  const x=e.target.closest('[data-a]');if(!x)return;
  const a=x.dataset.a,n=x.dataset.n,k=x.dataset.k,t=x.dataset.t;
- if(a=='zoom'){const c=x.dataset.c;zoom(photoFor(c),c);return}
+ if(a=='zoom'){const c=x.dataset.c;zoom(photoFull(c),c);return}
  if(a=='open'){cur={t,n};sheet()}
  if(a=='cl'){cur=null;sheet()}
  if(a=='nb'){const mx=Math.max(0,...D[t].map(b=>b.n));openM('Nova caixa',mx+1,'','',false,t)}
@@ -291,11 +359,12 @@ $('fotosFile').onchange=async e=>{
   for(const item of list){
    if(!item||!item.codigo||!item.foto)continue;
    const code=String(item.codigo).trim().toUpperCase();
-   const big=await compressDataUrl(item.foto,480);
-   if(big){PH[code]=big;added++}
+   const big=await makeBoth(item.foto);
+   const old=PH[code],oldLen=old?(old.f||old).length:0;
+   if(big&&big.f.length>oldLen){await putPhoto(code,big);added++}
   }
-  savePH();render();sheet();
-  toast(added?`${added} foto(s) importada(s)`:'Nenhuma foto nova encontrada nesse arquivo.');
+  render();sheet();
+  toast(added?`${added} foto(s) importada(s) ou melhorada(s)`:'Nenhuma foto nova encontrada nesse arquivo.');
  }catch(err){
   alert('Não consegui ler esse arquivo. Confira se é um JSON com campos "codigo" e "foto".');
  }
@@ -303,6 +372,7 @@ $('fotosFile').onchange=async e=>{
  e.target.value='';
 };
 render();
+loadPhotos().then(()=>{render();sheet()});
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
 }
