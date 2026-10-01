@@ -53,11 +53,16 @@ mark{background:#fde047;color:#000;border-radius:3px}
 .m{z-index:20;align-items:center;justify-content:center;padding:14px}.m.on{display:flex}
 .md{background:var(--card);border-radius:16px;padding:16px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px}
 .md label{font-size:12px;color:var(--mut)}
-.thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--bg);border:1px solid var(--ln);flex-shrink:0}
-.rw .thumb{width:48px;height:48px}
+.thumb{width:84px;height:84px;border-radius:12px;object-fit:cover;background:var(--bg);border:1px solid var(--ln);flex-shrink:0;cursor:zoom-in}
+.rw .thumb{width:84px;height:84px}
 .fprev{display:flex;align-items:center;gap:10px;margin-top:2px}
-.fprev img{width:60px;height:60px;border-radius:12px;object-fit:cover;border:1px solid var(--ln);background:var(--bg)}
+.fprev img{width:110px;height:110px;border-radius:12px;object-fit:cover;border:1px solid var(--ln);background:var(--bg);cursor:zoom-in}
 .fprev button{font-size:12px}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;z-index:30;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));cursor:zoom-out}
+.lb.on{display:flex}
+.lb img{max-width:100%;max-height:calc(100% - 70px);object-fit:contain;border-radius:8px}
+.lb span{color:#fff;font:700 15px ui-monospace,Menlo,monospace}
+.lb button{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:#fff2;color:#fff;border:0;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:13px;z-index:50;opacity:0;visibility:hidden;transition:transform .25s ease,opacity .25s ease,visibility .25s;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible}
 </style></head><body>
@@ -74,6 +79,7 @@ mark{background:#fde047;color:#000;border-radius:3px}
 </div>
 </div>
 <div id="toast"></div>
+<div class="lb" id="lb"><button type="button" aria-label="Fechar">✕</button><img id="lbi" alt="Foto do modelo"><span id="lbc"></span></div>
 <div class="sh" id="sh"><div class="sc" id="scc"></div></div>
 <div class="m" id="m"><div class="md">
 <b id="mt"></b>
@@ -152,7 +158,7 @@ let cur=null,pendingImg=null,removeImg=false;
 const PHOTOS_KEY='estoque-caixas-photos-v1';
 let PH={};
 try{PH=JSON.parse(localStorage.getItem(PHOTOS_KEY))||{}}catch(e){PH={}}
-const savePH=()=>{try{localStorage.setItem(PHOTOS_KEY,JSON.stringify(PH))}catch(e){}};
+const savePH=()=>{try{localStorage.setItem(PHOTOS_KEY,JSON.stringify(PH))}catch(e){setTimeout(()=>toast('Sem espaço para guardar todas as fotos.'),0)}};
 const photoFor=c=>PH[String(c||'').trim().toUpperCase()];
 
 function compressDataUrl(src,maxSize){
@@ -193,7 +199,7 @@ function render(){
   const R=[];['bota','plat'].forEach(t=>D[t].forEach(b=>b.items.forEach(i=>{const z=mz(i);if(z.length)R.push({t,n:b.n,c:i.c,z})})));
   R.sort((a,b)=>a.c.localeCompare(b.c)||a.n-b.n);
   const tot=R.reduce((a,r)=>a+r.z.reduce((s,x)=>s+x.q,0),0);
-  h=R.length?`<div class="rc">${R.length} ${R.length>1?'resultados':'resultado'} · ${pr(tot)} no total</div>`+R.map(r=>`<div class="rw" data-a="open" data-t="${r.t}" data-n="${r.n}">${photoFor(r.c)?`<img class="thumb" src="${photoFor(r.c)}" alt="">`:''}<div class="rl"><span class="cd">${hl(r.c)}</span><div class="ch">${chips(r.z,1)}</div></div><span class="bd ${r.t}">${r.t=='bota'?'Bota':'Plataforma'} · Caixa ${r.n}</span></div>`).join(''):'<div class="emp">Nada encontrado.</div>';
+  h=R.length?`<div class="rc">${R.length} ${R.length>1?'resultados':'resultado'} · ${pr(tot)} no total</div>`+R.map(r=>`<div class="rw" data-a="open" data-t="${r.t}" data-n="${r.n}">${photoFor(r.c)?`<img class="thumb" data-a="zoom" data-c="${esc(r.c)}" src="${photoFor(r.c)}" alt="">`:''}<div class="rl"><span class="cd">${hl(r.c)}</span><div class="ch">${chips(r.z,1)}</div></div><span class="bd ${r.t}">${r.t=='bota'?'Bota':'Plataforma'} · Caixa ${r.n}</span></div>`).join(''):'<div class="emp">Nada encontrado.</div>';
  }else{
   ['bota','plat'].forEach(t=>{
    const L=D[t].slice().sort((a,b)=>a.n-b.n);
@@ -207,7 +213,7 @@ function sheet(){
  if(!b){$('sh').classList.remove('on');cur=null;return}
  const t=cur.t,n=cur.n,a=`data-t="${t}" data-n="${n}"`;
  $('scc').innerHTML=`<div class="sh1"><span class="nb ${t}">${n}</span><div><b>${NM[t]}</b><small>${pr(pairs(b))} · ${b.items.length} ${b.items.length==1?'modelo':'modelos'}</small></div><button class="b s" data-a="cl">Fechar</button></div>`+
- b.items.map((i,k)=>`<div class="it">${photoFor(i.c)?`<img class="thumb" src="${photoFor(i.c)}" alt="">`:''}<div class="il"><span class="cd">${esc(i.c)}</span><div class="ch">${chips(i.z)}</div></div><div class="ib"><button class="b s" data-a="ei" ${a} data-k="${k}">✎</button><button class="b s" data-a="di" ${a} data-k="${k}">✕</button></div></div>`).join('')+
+ b.items.map((i,k)=>`<div class="it">${photoFor(i.c)?`<img class="thumb" data-a="zoom" data-c="${esc(i.c)}" src="${photoFor(i.c)}" alt="">`:''}<div class="il"><span class="cd">${esc(i.c)}</span><div class="ch">${chips(i.z)}</div></div><div class="ib"><button class="b s" data-a="ei" ${a} data-k="${k}">✎</button><button class="b s" data-a="di" ${a} data-k="${k}">✕</button></div></div>`).join('')+
  `<div class="sf"><button class="b p" data-a="ai" ${a}>＋ Modelo</button><button class="b" data-a="db" ${a}>Excluir caixa</button></div>`;
  $('sh').classList.add('on');
 }
@@ -239,10 +245,19 @@ $('ok').onclick=()=>{
  else if(pendingImg){PH[c]=pendingImg;savePH()}
  save();closeM();cur={t,n};render();sheet();
 };
+function zoom(src,code){
+ if(!src)return;
+ $('lbi').src=src;$('lbc').textContent=code||'';$('lb').classList.add('on');
+}
+const closeLb=()=>{$('lb').classList.remove('on');$('lbi').removeAttribute('src')};
+$('lb').onclick=closeLb;
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&$('lb').classList.contains('on'))closeLb()});
+$('f4prev').onclick=()=>zoom($('f4prev').src,$('f2').value.trim().toUpperCase());
 document.addEventListener('click',e=>{
  if(e.target.id=='sh'){cur=null;sheet();return}
  const x=e.target.closest('[data-a]');if(!x)return;
  const a=x.dataset.a,n=x.dataset.n,k=x.dataset.k,t=x.dataset.t;
+ if(a=='zoom'){const c=x.dataset.c;zoom(photoFor(c),c);return}
  if(a=='open'){cur={t,n};sheet()}
  if(a=='cl'){cur=null;sheet()}
  if(a=='nb'){const mx=Math.max(0,...D[t].map(b=>b.n));openM('Nova caixa',mx+1,'','',false,t)}
@@ -272,16 +287,15 @@ $('fotosFile').onchange=async e=>{
   if(Array.isArray(data.catalog))list.push(...data.catalog);
   if(Array.isArray(data.shoes))list.push(...data.shoes);
   if(Array.isArray(data))list.push(...data);
-  let added=0,skipped=0;
+  let added=0;
   for(const item of list){
    if(!item||!item.codigo||!item.foto)continue;
    const code=String(item.codigo).trim().toUpperCase();
-   if(PH[code]){skipped++;continue}
-   const small=await compressDataUrl(item.foto,220);
-   if(small){PH[code]=small;added++}
+   const big=await compressDataUrl(item.foto,480);
+   if(big){PH[code]=big;added++}
   }
   savePH();render();sheet();
-  toast(added?`${added} foto(s) importada(s)${skipped?` · ${skipped} já existiam`:''}`:'Nenhuma foto nova encontrada nesse arquivo.');
+  toast(added?`${added} foto(s) importada(s)`:'Nenhuma foto nova encontrada nesse arquivo.');
  }catch(err){
   alert('Não consegui ler esse arquivo. Confira se é um JSON com campos "codigo" e "foto".');
  }
